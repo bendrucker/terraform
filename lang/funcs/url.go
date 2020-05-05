@@ -76,7 +76,7 @@ var FormatURLFunc = function.New(&function.Spec{
 		obj := args[0].AsValueMap()
 
 		var user *url.Userinfo
-		if !obj["user"].IsNull() {
+		if !obj["username"].IsNull() {
 			if obj["password"].IsNull() {
 				user = url.User(obj["username"].AsString())
 			} else {

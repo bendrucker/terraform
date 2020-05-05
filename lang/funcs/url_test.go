@@ -25,6 +25,30 @@ func TestParseURL(t *testing.T) {
 			}),
 			false,
 		},
+		{
+			cty.StringVal("https://user@app.terraform.io/app?q=1"),
+			cty.ObjectVal(map[string]cty.Value{
+				"scheme":   cty.StringVal("https"),
+				"username": cty.StringVal("user"),
+				"password": cty.NullVal(cty.String),
+				"host":     cty.StringVal("app.terraform.io"),
+				"path":     cty.StringVal("/app"),
+				"query":    cty.StringVal("q=1"),
+			}),
+			false,
+		},
+		{
+			cty.StringVal("https://user:password@app.terraform.io/app?q=1"),
+			cty.ObjectVal(map[string]cty.Value{
+				"scheme":   cty.StringVal("https"),
+				"username": cty.StringVal("user"),
+				"password": cty.StringVal("password"),
+				"host":     cty.StringVal("app.terraform.io"),
+				"path":     cty.StringVal("/app"),
+				"query":    cty.StringVal("q=1"),
+			}),
+			false,
+		},
 	}
 
 	for _, test := range tests {
@@ -63,6 +87,30 @@ func TestFormatURL(t *testing.T) {
 				"query":    cty.StringVal("q=1"),
 			}),
 			cty.StringVal("https://app.terraform.io/app?q=1"),
+			false,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"scheme":   cty.StringVal("https"),
+				"username": cty.StringVal("username"),
+				"password": cty.NullVal(cty.String),
+				"host":     cty.StringVal("app.terraform.io"),
+				"path":     cty.StringVal("/app"),
+				"query":    cty.StringVal("q=1"),
+			}),
+			cty.StringVal("https://username@app.terraform.io/app?q=1"),
+			false,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"scheme":   cty.StringVal("https"),
+				"username": cty.StringVal("username"),
+				"password": cty.StringVal("password"),
+				"host":     cty.StringVal("app.terraform.io"),
+				"path":     cty.StringVal("/app"),
+				"query":    cty.StringVal("q=1"),
+			}),
+			cty.StringVal("https://username:password@app.terraform.io/app?q=1"),
 			false,
 		},
 	}
