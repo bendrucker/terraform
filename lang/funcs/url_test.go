@@ -49,6 +49,18 @@ func TestParseURL(t *testing.T) {
 			}),
 			false,
 		},
+		{
+			cty.StringVal("https://user:password@app.terraform.io/app?q=1"),
+			cty.ObjectVal(map[string]cty.Value{
+				"scheme":   cty.StringVal("https"),
+				"username": cty.StringVal("user"),
+				"password": cty.StringVal("password"),
+				"host":     cty.StringVal("app.terraform.io"),
+				"path":     cty.StringVal("/app"),
+				"query":    cty.StringVal("q=1"),
+			}),
+			false,
+		},
 	}
 
 	for _, test := range tests {
@@ -116,7 +128,7 @@ func TestFormatURL(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("parseurl(%#v)", test.URL), func(t *testing.T) {
+		t.Run(fmt.Sprintf("formaturl(%#v)", test.URL), func(t *testing.T) {
 			got, err := FormatURL(test.URL)
 
 			if test.Err {
