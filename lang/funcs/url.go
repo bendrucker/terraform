@@ -2,6 +2,7 @@ package funcs
 
 import (
 	"net/url"
+	"strconv"
 
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/function"
@@ -19,9 +20,10 @@ var ParseURLFunc = function.New(&function.Spec{
 		"scheme":   cty.String,
 		"username": cty.String,
 		"password": cty.String,
-		"host":     cty.String,
+		"hostname": cty.String,
+		"port":     cty.Number,
 		"path":     cty.String,
-		"query":    cty.String,
+		"query":    cty.Map(cty.Set(cty.String)),
 	})),
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		str := args[0].AsString()
@@ -45,13 +47,26 @@ var ParseURLFunc = function.New(&function.Spec{
 			}
 		}
 
+		var port cty.Value
+		if p := url.Port(); p != "" {
+			v, err := strconv.Atoi(p)
+			if err != nil {
+				return cty.NilVal, err
+			}
+
+			port = cty.NumberIntVal(int64(v))
+		} else {
+			port = cty.NullVal(cty.Number)
+		}
+
 		return cty.ObjectVal(map[string]cty.Value{
 			"scheme":   cty.StringVal(url.Scheme),
 			"username": username,
 			"password": password,
-			"host":     cty.StringVal(url.Host),
+			"hostname": cty.StringVal(url.Hostname()),
+			"port":     port,
 			"path":     cty.StringVal(url.Path),
-			"query":    cty.StringVal(url.RawQuery),
+			"query":    urlValuesToCty(url.Query()),
 		}), nil
 	},
 })
@@ -65,9 +80,10 @@ var FormatURLFunc = function.New(&function.Spec{
 				"scheme":   cty.String,
 				"username": cty.String,
 				"password": cty.String,
-				"host":     cty.String,
+				"hostname": cty.String,
+				"port":     cty.Number,
 				"path":     cty.String,
-				"query":    cty.String,
+				"query":    cty.Map(cty.Set(cty.String)),
 			}),
 		},
 	},
@@ -104,4 +120,17 @@ func ParseURL(url cty.Value) (cty.Value, error) {
 // FormatURL formats a URL object, returning a string.
 func FormatURL(url cty.Value) (cty.Value, error) {
 	return FormatURLFunc.Call([]cty.Value{url})
+}
+
+func urlValuesToCty(query url.Values) cty.Value {
+	ret := make(map[string]cty.Value, len(query))
+	for key, values := range query {
+		cValues := make([]cty.Value, len(values))
+		for i, v := range values {
+			cValues[i] = cty.StringVal(v)
+		}
+		ret[key] = cty.SetVal(cValues)
+	}
+
+	return cty.MapVal(ret)
 }
